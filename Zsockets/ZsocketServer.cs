@@ -15,18 +15,6 @@ namespace NetZiroxLib.Zsockets {
 
         private int ServerPort { get; set; }
         private string ServerIp { get; set; }
-
-        private TcpClient? persistentSocket;
-        public TcpClient PersistentSocket {
-            get {
-                if (persistentSocket == null)
-                    throw new Exception("Persistent Socket has not been created, please create a Tcp server first");
-                return persistentSocket;
-            }
-            set {
-                persistentSocket = value;
-            }
-        }
         public string ServerBuffer {get; set;}
 
         public ZsocketServer(string connection_string)
@@ -45,17 +33,12 @@ namespace NetZiroxLib.Zsockets {
             {
                 Console.WriteLine(this.ServerIp);
                 // parsing my own ipAdress using type safe memory checking
-                ReadOnlySpan<char> ipBytes = new(this.ServerIp.ToCharArray());
+                ReadOnlySpan<char> ipBytes = this.ServerIp.AsSpan();
                 IPAddress ipAddress = IPAddress.Parse(ipBytes);
                 // creating listener
                 this._listener = new TcpListener(ipAddress, this.ServerPort);
                 _listener.Start();
-                // pushing persistent socket as first connection
-                if (_clients != null) {
-                    var persistent = new TcpClient(this.ServerIp, this.ServerPort);
-                    this.persistentSocket = persistent;
-                    this._clients.Add(this.persistentSocket);
-                }
+                
                 Console.WriteLine("Server is listening");
             }
             catch (System.Exception e)
@@ -93,22 +76,6 @@ namespace NetZiroxLib.Zsockets {
                 }
         }
 
-        public string ReadNewData()
-        {
-            if (this.Token == null)
-                throw new Exception("Cancellation Token has not been created");
-
-
-            if (this.PersistentSocket.Connected)
-            {
-                byte[] msg = new byte[1024];
-                this.PersistentSocket.GetStream().Read(msg, 0, msg.Length);
-                string newData = Encoding.ASCII.GetString(msg);
-                this.ServerBuffer = newData;
-            }
-
-            return this.ServerBuffer;
-        }
 
         public void CloseAllConnections() {
             if (this._clients != null)

@@ -4,18 +4,18 @@ ZsocketServer server = new("127.0.0.1:8090");
 server.CreateTcpListener();
 server.WaitClients();
 
-int seconds_to_shutdown = 20;
+int seconds_to_shutdown = 30;
 int seconds_passed = 0;
 
 while(seconds_passed < seconds_to_shutdown) {
-
+    
     Task.Delay(1000).Wait();
     server.CheckNewData();
     seconds_passed++;
 
 }
 
-server.BroadCast("Thanks for visiting the server!");
+// hilo principal
 
 
 foreach (var item in server.ServerBuffer.Split("-"))
@@ -24,6 +24,7 @@ foreach (var item in server.ServerBuffer.Split("-"))
 }
 
 if (seconds_passed == seconds_to_shutdown) {
+    server.BroadCast("Thanks for visiting the server!");
     server.CleanUp();
     Console.WriteLine("Cleaning up resources");
 }

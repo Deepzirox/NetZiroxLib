@@ -47,33 +47,42 @@ namespace NetZiroxLib.Zsockets {
             }
         }
 
-        public void BroadCast(string message) {
-            if (this._clients != null)
+        public async void BroadCast(string message) {
+
+            if (this.Token == null)
+                return;
+
+            await Task.Run(() => {
+                if (this._clients != null)
                 foreach (var client in this._clients)
                 {
-                    byte[] msg = Encoding.ASCII.GetBytes(message);
-                    client.GetStream().Write(msg, 0, msg.Length);
+                    var bytes = Encoding.UTF8.GetBytes(message);
+                    client.GetStream().Write(bytes, 0, bytes.Length);
                 }
+            }, this.Token.Token);
         }
 
-         public void CheckNewData()
+         public async void BroadcastNewData()
         {
-            string res = "";
-
-            if (this._clients != null)
+            
+            await Task.Run(() => {
+                if (this._clients != null)
                 foreach (var client in this._clients)
                 {
-                    if (client.Available > 0)
+                    if (client.Connected && client.Available > 0)
                     {
                         byte[] msg = new byte[1024];
+                        MemoryStream msgStream = new MemoryStream();
+                        int bytesReaded;
 
-                        client.GetStream().Read(msg, 0, msg.Length);
-                        res = Encoding.ASCII.GetString(msg);
-
-                        if (res != "Unhandled exception")
-                            this.ServerBuffer += res;
+                        while ((bytesReaded = client.GetStream().Read(msg, 0, msg.Length)) > 0) {
+                            msgStream.Write(msg, 0, bytesReaded);
+                            
+                            this.BroadCast(Encoding.UTF8.GetString(msgStream.ToArray()));
+                        }
                     }
                 }
+            }, this.Token.Token);
         }
 
 

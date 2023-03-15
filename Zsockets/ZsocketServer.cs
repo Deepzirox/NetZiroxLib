@@ -62,7 +62,7 @@ namespace NetZiroxLib.Zsockets {
             }, this.Token.Token);
         }
 
-         public async void BroadcastNewData()
+        public async void BroadcastNewData()
         {
             
             await Task.Run(() => {
@@ -77,8 +77,9 @@ namespace NetZiroxLib.Zsockets {
 
                         while ((bytesReaded = client.GetStream().Read(msg, 0, msg.Length)) > 0) {
                             msgStream.Write(msg, 0, bytesReaded);
-                            
-                            this.BroadCast(Encoding.UTF8.GetString(msgStream.ToArray()));
+                            var text = Encoding.UTF8.GetString(msgStream.ToArray());
+                            this.BroadCast(text);
+                            this.ServerBuffer += text;
                         }
                     }
                 }
